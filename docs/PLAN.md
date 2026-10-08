@@ -15,7 +15,9 @@ An 80s pixel-art Android game. Blue enemy prop plane versus a skateboarding sold
 - **Lives:** player has 3 lives. Plane has its own HP. Whoever hits zero first loses.
 - **Supply drone** flies by periodically and drops parachute crates: +1 life, rockets, or shield. The player collects them by catching them.
 - **Background** follows the phone's clock: dawn (05-08), day (08-17), evening (17-20), night (otherwise).
-- **Saves:** high score and stats first. Mid-match save/resume is a stretch goal.
+- **Score:** how long the player survives, in seconds. Best time is kept as the high score.
+- **Sound:** retro "old school MIDI" style chiptune effects and background music, all generated in code. A button switches the music on and off.
+- **No saved games** for now. Possible later feature.
 
 ## Decisions so far
 
@@ -26,7 +28,8 @@ An 80s pixel-art Android game. Blue enemy prop plane versus a skateboarding sold
 | Input | Accelerometer tilt, with dead zone and smoothing. Tested on a real phone |
 | Art | Sprites defined in code as character grids, so they are editable. Designed in `tools/sprite-lab.html` |
 | Code style | Heavily commented and modular, written for students to learn from |
-| Sound | Generated in code, no audio files |
+| Sound | Chiptune effects and looping music generated in code with `AudioTrack`, no audio files. Music on/off button. A Sound Lab page may be built to preview the sounds first |
+| Saved games | Skipped. Score is survival time only |
 | Docs | README with architecture, how to play, and credits (Aziz as designer/director, Claude as developer) written at the end |
 
 ## Sprites
@@ -50,10 +53,23 @@ Planned settings:
 
 Details to settle when we start coding. Anything that feels like a "magic number" in the game goes here instead.
 
+## Built to grow
+
+Aziz wants to add features later (saved games, a boss, more). The code is organised so these slot in without rewrites:
+
+- **Entities:** plane, drone, bomb, rocket, crate and player all share one `Entity` base (update, draw, hitbox). A new enemy or boss is a new class.
+- **Game states:** Title, Playing, Paused and GameOver are separate states. A save/resume screen or a boss intro becomes a new state.
+- **Data-driven spawning:** what spawns and when comes from lists in `GameConfig.kt`, not hard-coded logic. A boss is a new entry.
+- **Registries:** sprites, sounds and crate types are looked up by name. Adding one means adding one line.
+- **Score and storage** sit behind small classes, so changing the score rule or adding saves touches one place.
+
+Candidate later features: saved games, a boss plane, new crate types, more enemy types, global leaderboard.
+
 ## Screenshots
 
 - `docs/screenshots/sprite-lab-1-scene-and-sprites.png`: live scene, sprite shelf, editor.
 - `docs/screenshots/sprite-lab-2-palette-and-export.png`: palette and Kotlin export.
+- `docs/screenshots/sprite-lab-3-evening-scene-new-plane.png`: evening scene with the WWII-style plane.
 
 ## Next steps
 
