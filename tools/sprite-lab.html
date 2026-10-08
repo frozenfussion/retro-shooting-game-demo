@@ -1,0 +1,465 @@
+<title>Sprite Lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<style>
+/* Layout: live game scene on the left, sprite shelf + pixel editor on the right; stacks on phones.
+   Single committed look: dusk arcade cabinet, so both host themes see the same colors. */
+:root{
+  --bg:#12102b; --panel:#1c1944; --panel2:#262260; --line:#3b3590;
+  --fg:#f1ecff; --dim:#9d97d6; --accent:#ffb000; --cyan:#4de3ff; --pink:#ff4fa3;
+  --font-display:'Press Start 2P',ui-monospace,Menlo,monospace; --font-body:'VT323',ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:20px;line-height:1.25;padding-inline:16px;padding-block:20px 40px}
+h1,h2,h3{font-family:var(--font-display);font-weight:400;text-wrap:balance;margin:0}
+h1{font-size:18px;color:var(--accent);letter-spacing:.06em}
+h2{font-size:11px;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase}
+p{margin:0}
+.wrap{max-width:1100px;margin-inline:auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-direction:column;gap:8px}
+header p{color:var(--dim);max-width:62ch}
+.main{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:800px){.main{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:2px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;max-width:100%}
+#scene{width:100%;aspect-ratio:9/16;border:2px solid var(--line);background:#000}
+.hint{color:var(--dim);font-size:18px}
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.card{background:var(--panel2);border:2px solid transparent;padding:6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.1;text-align:center}
+.card:hover{border-color:var(--line)}
+.card[aria-pressed="true"]{border-color:var(--accent)}
+.card .thumb{height:48px;display:flex;align-items:center;justify-content:center}
+.card canvas{max-height:48px;max-width:80px;width:auto}
+.edhead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.edhead h3{font-size:12px;color:var(--accent)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+button,.btn{font-family:var(--font-body);font-size:20px;color:var(--fg);background:var(--panel2);border:2px solid var(--line);padding:4px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible,.card:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--accent);color:#1a1200;border-color:var(--accent)}
+.gridwrap{overflow:auto;background:repeating-conic-gradient(#2a2670 0 25%,#221f5c 0 50%) 0 0/16px 16px;border:2px solid var(--line);align-self:flex-start;max-width:100%}
+#editor{cursor:crosshair;touch-action:none}
+.pal{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}
+.sw{display:flex;align-items:center;gap:8px;padding:3px 6px;background:var(--panel2);border:2px solid transparent;cursor:pointer;color:var(--fg);font-size:17px;text-align:left}
+.sw[aria-pressed="true"]{border-color:var(--accent);background:var(--panel2);color:var(--fg)}
+.sw .chip{width:22px;height:22px;border:2px solid #000;flex:none;position:relative}
+.sw .key{font-family:var(--font-display);font-size:10px;color:var(--accent);width:1.2em;flex:none}
+.sw .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.sw input{width:26px;height:26px;padding:0;border:0;background:none;cursor:pointer;flex:none}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+textarea{width:100%;height:170px;background:#0b0920;color:#b9ffc8;border:2px solid var(--line);font-family:var(--font-body);font-size:18px;line-height:1.1;padding:8px;resize:vertical;white-space:pre;overflow:auto}
+.ok{color:var(--accent);min-height:1.2em}
+.note{color:var(--dim)}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Sprite Lab</h1>
+    <p>Every character in the game is a small grid of letters. Pick a sprite, paint pixels, and the scene on the left updates live. When you like the look, copy the Kotlin and it goes straight into the game's <b>Sprites.kt</b>.</p>
+  </header>
+
+  <div class="main">
+    <section class="panel" aria-label="Live scene">
+      <h2>Live scene</h2>
+      <canvas id="scene" width="180" height="320"></canvas>
+      <div class="tabs" id="phaseTabs" role="group" aria-label="Time of day"></div>
+      <p class="hint" id="phaseNote"></p>
+      <p class="hint">Preview only. Plane flies, pilot laughs, soldier rolls and fires, drone drops crates. Motion here is for the look, the real rules come with the game code.</p>
+    </section>
+
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+      <section class="panel" aria-label="Sprite shelf">
+        <h2>Sprites</h2>
+        <div class="shelf" id="shelf"></div>
+      </section>
+
+      <section class="panel" aria-label="Editor">
+        <div class="edhead">
+          <h3 id="edTitle"></h3>
+          <span class="note" id="edSize"></span>
+        </div>
+        <p class="note" id="edNote"></p>
+        <div class="tabs" id="frameTabs" role="group" aria-label="Animation frames"></div>
+        <div class="gridwrap"><canvas id="editor"></canvas></div>
+        <h2>Palette <span class="note" style="font-family:var(--font-body);text-transform:none;letter-spacing:0">(click to select, square to recolour)</span></h2>
+        <div class="pal" id="pal"></div>
+        <div class="row">
+          <button id="addFrame">Copy frame</button>
+          <button id="delFrame">Delete frame</button>
+          <button id="resetOne">Reset sprite</button>
+          <button id="resetAll">Reset everything</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Kotlin export">
+        <h2>Kotlin export</h2>
+        <div class="row">
+          <button id="copyOne">Copy this sprite</button>
+          <button id="copyAll">Copy Sprites.kt (all)</button>
+          <span class="ok" id="msg" role="status"></span>
+        </div>
+        <textarea id="code" readonly spellcheck="false" aria-label="Generated Kotlin"></textarea>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+// Sprite data: each row is a string, each character is a palette key.
+const PALETTE = {
+  '.': ['#00000000','Transparent'],
+  K:['#15122e','Outline'], W:['#f6f1e6','White'], B:['#2f6fe4','Plane blue'], D:['#1d3f99','Deep blue'],
+  L:['#8fc3ff','Light blue'], Y:['#ffd93b','Hair yellow'], y:['#d9a21b','Hair shade'], S:['#f4bc8e','Skin'],
+  s:['#cf8d62','Skin shade'], U:['#4a4f66','Suit'], u:['#70769a','Suit light'], R:['#e63946','Red'],
+  O:['#ff9a1f','Orange'], T:['#a56a3a','Camo brown'], t:['#5e3b1f','Camo dark'], N:['#cfa66b','Camo sand'],
+  M:['#a3a9b8','Metal'], m:['#5b6174','Metal dark'], g:['#2c6f3c','Crate green'], k:['#2a2840','Bomb black']
+};
+const SPRITES = [
+ {id:'plane',name:'Enemy plane',note:'Blue prop plane, faces right. Pilot is drawn on top of it.',frames:[[
+"..KK............................",
+"..KRK...........................",
+"..KRRK..........................",
+"..KRRRK.....KKKKKKKKKK..........",
+"...KRRRBBBBBBBBBBBBBBBBBKKK.....",
+"....KRRBBBBBBBBBBBBBBBBBBBBKKK..",
+".....KBBBBBBBBBBBBBBBBBBBBBBKKMM",
+"....KWWWWWWWWWWWWWWWWWWWWWWKMMmK",
+"...KBBBBBBBBBBBBBBBBBBBBKKMMmK..",
+"...KKDDDDDDDDDDDDDDDDDDDKKK.....",
+"......KKKKKKKKKKKKKKKKKK........",
+"........KLLLLLLLLLLLLLLLK.......",
+"........KKKKKKKKKKKKKKKKK.......",
+"...........KMK......KMK........."]]},
+ {id:'prop',name:'Propeller',note:'2 frames. Swap them every few ticks so it spins.',frames:[[
+".K.","KMK","KMK","KMK","KMK","KMK","KMK","KMK","KMK","KMK","KMK",".K."],[
+"...","...",".M.",".M.","KMK","KMK","KMK","KMK",".M.",".M.","...","..."]]},
+ {id:'pilot_head',name:'Pilot head',note:'2 frames: grin and open-mouth laugh. Wobble it in code.',frames:[[
+"...yYYYYY...",
+".yYYYYYYYYK.",
+"yYYYYYYYYYKK",
+".yYYYYYYSSSK",
+"..yYYYYSKSSK",
+"...yYYYSSSSK",
+"....YYSSSSsK",
+".....KSKKKsK",
+"......KKKKK."],[
+"..yYYYYYY...",
+"yYYYYYYYYYK.",
+".yYYYYYYYYKK",
+"yyYYYYYYSSSK",
+".yYYYYYSKSSK",
+"..yYYYYSSSSK",
+"...YYYSSSSsK",
+".....KSKRRsK",
+"......KKRRK."]]},
+ {id:'pilot_body',name:'Pilot suit',note:'Grey suit, white collar, red tie. Stays still while the head wobbles.',frames:[[
+"..KUUWRWUUK.",
+".KUUUURUUUUK",
+".KUuUURUUuUK",
+".KKKKKKKKKK."]]},
+ {id:'skater',name:'Skater soldier',note:'Brown camo, rocket launcher on shoulder, red skateboard.',frames:[[
+"...KKKKKK..KMMK.",
+"..KttttttK.KMmK.",
+"..KtTTTTtK.KMmK.",
+"..KSSSSSSK.KMmK.",
+"..KtKSSKtK.KMmK.",
+"..KttSSttKKKMmK.",
+"...KKttKK..KMmK.",
+"..KTTtTTtTKKMmK.",
+".KTtTNTTtTTKMmK.",
+".KTTtTTNtTTSMmK.",
+".KtTTNTTTtTKKKK.",
+".KTNTTtTTNTK....",
+"..KTtTTTtTK.....",
+"..KKKKKKKKK.....",
+"..KTTtKKtTTK....",
+"..KTtTK.KTtTK...",
+"..KTNTK.KTTTK...",
+"..KttTK.KtTtK...",
+"..KKKKK.KKKKK...",
+".KKKKKKKKKKKKKK.",
+"KRRRRRRRRRRRRRRK",
+".KKKKKKKKKKKKKK.",
+"..KMK......KMK..",
+"..KKK......KKK.."]]},
+ {id:'rocket',name:'Rocket',note:'2 flame frames. Flies straight up.',frames:[[
+".K.","KWK","KWK","KRK","KRK","KMK",".O.",".Y."],[
+".K.","KWK","KWK","KRK","KRK","KMK","OYO",".O."]]},
+ {id:'bomb',name:'Bomb',note:'Dropped by the plane. Falls nose-down.',frames:[[
+"K.....K","KK...KK",".KKKKK.",".KkMkkK",".KkMkkK",".KRRRRK",".KkkkkK","..KkkK.","...KK..","...K..."]]},
+ {id:'drone',name:'Supply drone',note:'2 rotor frames. Drops crates on parachutes.',frames:[[
+"MMMMMM........MMMMMM",
+"..mK............Km..",
+"...KKKKKKKKKKKKKK...",
+"...KMMMMMMMMMMMMK...",
+"..KKmmmmRRRRmmmmKK..",
+"..K.KmmmmmmmmmmK.K..",
+"..K..KKKKKKKKKK..K.."],[
+"..MMMM........MMMM..",
+"..mK............Km..",
+"...KKKKKKKKKKKKKK...",
+"...KMMMMMMMMMMMMK...",
+"..KKmmmmRRRRmmmmKK..",
+"..K.KmmmmmmmmmmK.K..",
+"..K..KKKKKKKKKK..K.."]]},
+ {id:'parachute',name:'Parachute',note:'Drawn above a falling crate.',frames:[[
+"..KKKKKKKKK..",
+".KRRWWRRWWRRK",
+"KRRWWRRRRWWRK",
+".K..K...K..K.",
+"..K..K.K..K..",
+"...K..K..K...",
+"....K.K.K...."]]},
+ {id:'crate_life',name:'Crate: +1 life',note:'Heart crate.',frames:[[
+"KKKKKKKKKKK","KWWWWWWWWWK","KWRRWWRRWWK","KWRRRRRRRWK","KWRRRRRRRWK","KWWRRRRRWWK","KWWWRRRWWWK","KWWWWRWWWWK","KWWWWWWWWWK","KWWWWWWWWWK","KKKKKKKKKKK"]]},
+ {id:'crate_ammo',name:'Crate: rockets',note:'Green ammo crate.',frames:[[
+"KKKKKKKKKKK","KgggggggggK","KggggWggggK","KgggWWWgggK","KgggWRWgggK","KgggWWWgggK","KgggWWWgggK","KggMWWWMggK","KgggOYOgggK","KgggggggggK","KKKKKKKKKKK"]]},
+ {id:'crate_shield',name:'Crate: shield',note:'Blue shield crate.',frames:[[
+"KKKKKKKKKKK","KDDDDDDDDDK","KDWWWWWWWDK","KDWBBBBBWDK","KDWBBBBBWDK","KDWBBLBBWDK","KDDWBBBWDDK","KDDDWBWDDDK","KDDDDWDDDDK","KDDDDDDDDDK","KKKKKKKKKKK"]]},
+ {id:'explosion',name:'Explosion',note:'3 frames: flash, blast, smoke.',frames:[[
+"............","............","............","....OOOO....","...OYYYYO...","...OYWWYO...","...OYWWYO...","...OYYYYO...","....OOOO....","............","............","............"],[
+"............","....O..O....","..O.OOOO.O..","...OOYYOO...","..OOYYYYOO..",".OOYYWWYYOO.",".OOYYWWYYOO.","..OOYYYYOO..","...OOYYOO...","..O.OOOO.O..","....O..O....","............"],[
+"............","............","..M....M....","....M.O.....",".M....M..M..","...O.....O..","..M..M......","....O...M...",".M.....M....","......M..M..","............","............"]]},
+ {id:'heart',name:'HUD heart',note:'Shows remaining lives.',frames:[[
+".RR.RR.","RRRRRRR","RRRRRRR",".RRRRR.","..RRR..","...R..."]]}
+];
+
+var STORE='retro-sprite-lab-v1';
+var DEFAULT=JSON.stringify({palette:PALETTE,sprites:SPRITES});
+var state=JSON.parse(DEFAULT);
+try{var saved=localStorage.getItem(STORE);if(saved){var s=JSON.parse(saved);if(s&&s.sprites&&s.palette)state=s}}catch(e){}
+function persist(){try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}}
+function byId(id){return state.sprites.find(function(s){return s.id===id})}
+
+var sel=state.sprites[0].id, frame=0, brush='B';
+
+/* ---------- sprite -> offscreen canvas cache ---------- */
+var cache={};
+function bitmap(id,f){
+  var sp=byId(id),f=((f%sp.frames.length)+sp.frames.length)%sp.frames.length;
+  var rows=sp.frames[f];
+  var key=id+':'+f;
+  var c=cache[key];
+  if(c)return c;
+  c=document.createElement('canvas');c.width=rows[0].length;c.height=rows.length;
+  var g=c.getContext('2d');
+  rows.forEach(function(r,y){for(var x=0;x<r.length;x++){var ch=r[x];if(ch==='.')continue;var p=state.palette[ch];if(!p)continue;g.fillStyle=p[0];g.fillRect(x,y,1,1)}});
+  cache[key]=c;return c;
+}
+function clearCache(){cache={}}
+
+/* ---------- shelf ---------- */
+function drawThumb(cv,id){
+  var b=bitmap(id,0),sc=Math.max(1,Math.min(5,Math.floor(80/b.width),Math.floor(48/b.height)));
+  cv.width=b.width*sc;cv.height=b.height*sc;
+  var g=cv.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(b,0,0,cv.width,cv.height);
+}
+function buildShelf(){
+  var el=document.getElementById('shelf');el.innerHTML='';
+  state.sprites.forEach(function(sp){
+    var b=document.createElement('button');b.className='card';b.type='button';
+    b.setAttribute('aria-pressed',sp.id===sel);
+    var t=document.createElement('div');t.className='thumb';var cv=document.createElement('canvas');t.appendChild(cv);
+    var l=document.createElement('span');l.textContent=sp.name;
+    b.appendChild(t);b.appendChild(l);
+    b.onclick=function(){sel=sp.id;frame=0;refresh()};
+    el.appendChild(b);drawThumb(cv,sp.id);
+  });
+}
+
+/* ---------- editor ---------- */
+var ed=document.getElementById('editor'),eg=ed.getContext('2d'),CELL=16;
+function curRows(){return byId(sel).frames[frame]}
+function drawEditor(){
+  var rows=curRows(),w=rows[0].length,h=rows.length;
+  var avail=Math.max(160,Math.min(window.innerWidth-80,640));
+  CELL=Math.max(8,Math.min(24,Math.floor(avail/w)));
+  ed.width=w*CELL;ed.height=h*CELL;
+  eg.clearRect(0,0,ed.width,ed.height);
+  rows.forEach(function(r,y){for(var x=0;x<w;x++){var ch=r[x];if(ch==='.')continue;eg.fillStyle=state.palette[ch][0];eg.fillRect(x*CELL,y*CELL,CELL,CELL)}});
+  eg.strokeStyle='rgba(255,255,255,.14)';eg.lineWidth=1;eg.beginPath();
+  for(var x=0;x<=w;x++){eg.moveTo(x*CELL+.5,0);eg.lineTo(x*CELL+.5,h*CELL)}
+  for(var y=0;y<=h;y++){eg.moveTo(0,y*CELL+.5);eg.lineTo(w*CELL,y*CELL+.5)}
+  eg.stroke();
+}
+function paintAt(ev){
+  var r=ed.getBoundingClientRect(),sx=ed.width/r.width,sy=ed.height/r.height;
+  var x=Math.floor((ev.clientX-r.left)*sx/CELL),y=Math.floor((ev.clientY-r.top)*sy/CELL);
+  var rows=curRows();
+  if(y<0||y>=rows.length||x<0||x>=rows[0].length)return;
+  if(rows[y][x]===brush)return;
+  rows[y]=rows[y].slice(0,x)+brush+rows[y].slice(x+1);
+  clearCache();drawEditor();exportCode();
+}
+var down=false;
+ed.addEventListener('pointerdown',function(e){down=true;ed.setPointerCapture(e.pointerId);paintAt(e)});
+ed.addEventListener('pointermove',function(e){if(down)paintAt(e)});
+function up(){if(down){down=false;persist();buildShelf()}}
+ed.addEventListener('pointerup',up);ed.addEventListener('pointercancel',up);
+
+function buildPalette(){
+  var el=document.getElementById('pal');el.innerHTML='';
+  Object.keys(state.palette).forEach(function(k){
+    var p=state.palette[k];
+    var b=document.createElement('div');b.className='sw';b.setAttribute('role','button');b.tabIndex=0;
+    b.setAttribute('aria-pressed',k===brush);
+    var key=document.createElement('span');key.className='key';key.textContent=k==='.'?'·':k;
+    var chip=document.createElement('span');chip.className='chip';
+    if(k==='.')chip.style.background='repeating-conic-gradient(#555 0 25%,#999 0 50%) 0 0/8px 8px';else chip.style.background=p[0];
+    var nm=document.createElement('span');nm.className='nm';nm.textContent=p[1];
+    b.appendChild(key);b.appendChild(chip);b.appendChild(nm);
+    if(k!=='.'){
+      var inp=document.createElement('input');inp.type='color';inp.value=p[0];inp.id='col-'+k;inp.title='Recolour '+p[1];inp.setAttribute('aria-label','Recolour '+p[1]);
+      inp.onclick=function(e){e.stopPropagation()};
+      inp.oninput=function(){p[0]=inp.value;chip.style.background=inp.value;clearCache();drawEditor();exportCode()};
+      inp.onchange=function(){persist();buildShelf()};
+      b.appendChild(inp);
+    }
+    var pick=function(){brush=k;buildPalette()};
+    b.onclick=pick;b.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick()}};
+    el.appendChild(b);
+  });
+}
+
+function buildTabs(){
+  var sp=byId(sel),el=document.getElementById('frameTabs');el.innerHTML='';
+  sp.frames.forEach(function(_,i){
+    var b=document.createElement('button');b.type='button';b.textContent='Frame '+(i+1);
+    b.setAttribute('aria-pressed',i===frame);b.onclick=function(){frame=i;refresh()};
+    el.appendChild(b);
+  });
+  document.getElementById('delFrame').disabled=sp.frames.length<2;
+}
+
+/* ---------- Kotlin export ---------- */
+function constName(id){return id.toUpperCase()}
+function spriteKotlin(sp){
+  var out='';
+  if(sp.frames.length===1){
+    out+='val '+constName(sp.id)+' = Sprite(\n'+sp.frames[0].map(function(r){return '    "'+r+'"'}).join(',\n')+'\n)\n';
+  }else{
+    out+='val '+constName(sp.id)+' = listOf(\n'+sp.frames.map(function(f){return '    Sprite(\n'+f.map(function(r){return '        "'+r+'"'}).join(',\n')+'\n    )'}).join(',\n')+'\n)\n';
+  }
+  return '// '+sp.name+' - '+sp.note+'\n'+out;
+}
+function paletteKotlin(){
+  var keys=Object.keys(state.palette).filter(function(k){return k!=='.'});
+  return '// Palette: one character = one color (0xAARRGGBB). "." is transparent.\nval PALETTE: Map<Char, Int> = mapOf(\n'+
+    keys.map(function(k){var h=state.palette[k][0].slice(1).toUpperCase();return "    '"+k+"' to 0xFF"+h+'.toInt()  // '+state.palette[k][1]}).join(',\n')+'\n)\n';
+}
+function exportCode(){
+  document.getElementById('code').value=spriteKotlin(byId(sel));
+}
+function allKotlin(){
+  return 'package com.example.retroshooter\n\n// Generated from Sprite Lab. Edit by hand or paste a fresh export.\n\n'+paletteKotlin()+'\n'+state.sprites.map(spriteKotlin).join('\n');
+}
+function flash(t){var m=document.getElementById('msg');m.textContent=t;setTimeout(function(){if(m.textContent===t)m.textContent=''},2500)}
+function copy(text,label){
+  var ta=document.getElementById('code');
+  ta.value=text;
+  var done=function(){flash(label+' copied')};
+  var fallback=function(){ta.focus();ta.select();flash('Press Ctrl/Cmd+C to copy')};
+  try{navigator.clipboard.writeText(text).then(done,fallback)}catch(e){fallback()}
+}
+document.getElementById('copyOne').onclick=function(){copy(spriteKotlin(byId(sel)),'Sprite')};
+document.getElementById('copyAll').onclick=function(){copy(allKotlin(),'Sprites.kt')};
+
+document.getElementById('addFrame').onclick=function(){var sp=byId(sel);sp.frames.splice(frame+1,0,sp.frames[frame].slice());frame++;clearCache();persist();refresh()};
+document.getElementById('delFrame').onclick=function(){var sp=byId(sel);if(sp.frames.length<2)return;sp.frames.splice(frame,1);frame=Math.max(0,frame-1);clearCache();persist();refresh()};
+document.getElementById('resetOne').onclick=function(){var d=JSON.parse(DEFAULT);var i=state.sprites.findIndex(function(s){return s.id===sel});state.sprites[i]=d.sprites.find(function(s){return s.id===sel});frame=0;clearCache();persist();refresh();flash('Sprite reset')};
+document.getElementById('resetAll').onclick=function(){state=JSON.parse(DEFAULT);frame=0;clearCache();persist();refresh();flash('Everything reset')};
+
+function refresh(){
+  var sp=byId(sel);if(frame>=sp.frames.length)frame=0;
+  document.getElementById('edTitle').textContent=sp.name;
+  var r=sp.frames[frame];
+  document.getElementById('edSize').textContent=r[0].length+' x '+r.length+' px';
+  document.getElementById('edNote').textContent=sp.note;
+  buildShelf();buildTabs();buildPalette();drawEditor();exportCode();
+}
+window.addEventListener('resize',drawEditor);
+
+/* ---------- live scene (180 x 320 internal pixels) ---------- */
+var sc=document.getElementById('scene'),g=sc.getContext('2d');g.imageSmoothingEnabled=false;
+var W=180,H=320;
+function spr(id,f,x,y){g.drawImage(bitmap(id,f),Math.round(x),Math.round(y))}
+var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+var bombs=[],rockets=[],booms=[],lastBomb=0,lastRocket=0,t0=performance.now(),crate=null,crateTimer=0;
+var stars=[];for(var i=0;i<34;i++)stars.push([Math.random()*W|0,Math.random()*120|0]);
+var clouds=[[20,30,1],[110,70,2],[60,115,1],[150,20,2]];
+/* Time-of-day looks. The real game picks one from the phone clock:
+   05-08 dawn, 08-17 day, 17-20 evening, otherwise night. */
+var PHASES={
+  dawn:{label:'Dawn',sky:['#2b2a6b','#4a3a85','#74498f','#a8568f','#d96e8f','#f58f8f','#ffb18a','#ffd39a'],
+        water:['#ffd39a','#f58f8f','#d96e8f','#a8568f','#74498f','#4a3a85','#2b2a6b'],
+        orb:{x:46,y:140,c:'#fff0c4',kind:'sun'},stars:0.25,clouds:'#f6b0b8',ground:'#23183f',grass:'#46805a',strip:'#2f5c42'},
+  day:{label:'Day',sky:['#3d9bf2','#4fa8f5','#62b4f7','#78c1f9','#8fcdfa','#a6d8fb','#bde3fc','#d4eefd'],
+        water:['#d4eefd','#a6d8fb','#78c1f9','#4fa8f5','#3d8fe0','#2e78c8','#2563ae'],
+        orb:{x:140,y:62,c:'#fff3a0',kind:'sun'},stars:0,clouds:'#ffffff',ground:'#2a4a2a',grass:'#6fcf4f',strip:'#3f9a35'},
+  evening:{label:'Evening',sky:['#1a1245','#26175c','#3a1a6e','#5a1f7e','#8a2a86','#c2408a','#ff6f6f','#ffa15c'],
+        water:['#ffa15c','#ff6f6f','#c2408a','#8a2a86','#5a1f7e','#3a1a6e','#26175c'],
+        orb:{x:90,y:140,c:'#fff6d6',kind:'sun'},stars:0.4,clouds:'#c2408a',ground:'#0d0a24',grass:'#2c6f3c',strip:'#1b4a28'},
+  night:{label:'Night',sky:['#05051a','#080826','#0b0b33','#0e0e3d','#121248','#161652','#1a1a5c','#1e1e66'],
+        water:['#1e1e66','#1a1a5c','#161652','#121248','#0e0e3d','#0b0b33','#080826'],
+        orb:{x:140,y:56,c:'#e8ecff',kind:'moon'},stars:1,clouds:'#1c1c55',ground:'#04040f',grass:'#1c4a2a',strip:'#12321c'}
+};
+var phaseMode='auto';
+function autoPhase(){var h=new Date().getHours();return h>=5&&h<8?'dawn':h>=8&&h<17?'day':h>=17&&h<20?'evening':'night'}
+function curPhase(){return phaseMode==='auto'?autoPhase():phaseMode}
+function disc(cx,cy,r,c){g.fillStyle=c;for(var y=-r;y<=r;y++){var w=Math.floor(Math.sqrt(r*r-y*y)+0.5);g.fillRect(cx-w,cy+y,w*2+1,1)}}
+function sky(t){
+  var P=PHASES[curPhase()];
+  for(var i=0;i<8;i++){g.fillStyle=P.sky[i];g.fillRect(0,i*20,W,21)}
+  for(var j=0;j<7;j++){g.fillStyle=P.water[j];g.fillRect(0,160+j*18,W,18)}
+  var n=Math.floor(stars.length*P.stars);
+  g.fillStyle='#fff';for(var k=0;k<n;k++){if(Math.floor(t*2+k)%7!==0)g.fillRect(stars[k][0],stars[k][1],1,1)}
+  var o=P.orb;
+  if(o.kind==='moon'){disc(o.x,o.y,11,o.c);disc(o.x+5,o.y-3,10,P.sky[2]);}
+  else if(o.y>=130){disc(o.x,o.y,20,o.c);g.fillStyle=P.sky[7];g.fillRect(0,o.y+1,W,160-o.y)}
+  else disc(o.x,o.y,10,o.c);
+  clouds.forEach(function(c){var cx=((c[0]+t*(3+c[2]*2))%(W+60))-30,cy=c[1];g.fillStyle=P.clouds;g.fillRect(cx,cy,22*c[2],4);g.fillRect(cx+4*c[2],cy-4,12*c[2],4);g.fillRect(cx+2*c[2],cy+4,16*c[2],2)});
+  g.fillStyle=P.ground;g.fillRect(0,288,W,32);
+  g.fillStyle=P.grass;g.fillRect(0,288,W,3);
+  g.fillStyle=P.strip;for(var x=0;x<W;x+=8)g.fillRect(x,291,4,2);
+}
+function frameScene(now){
+  var t=Math.max(0,(now-t0)/1000);if(reduce)t=1.2;
+  g.clearRect(0,0,W,H);sky(t);
+  // drone + crate
+  var dx=(W+30)-((t*22)%(W+60)), dy=96+Math.sin(t*2)*3;
+  spr('drone',Math.floor(t*12)%2,dx-10,dy);
+  if(!crate&&Math.floor(t)%9===0&&crateTimer<t-4&&dx>40&&dx<140){crate={x:dx-5,y:dy+8,k:['crate_life','crate_ammo','crate_shield'][Math.floor(t/9)%3]};crateTimer=t}
+  if(crate){crate.y+=0.35;crate.x+=Math.sin(t*3)*0.25;spr('parachute',0,crate.x-1,crate.y-8);spr(crate.k,0,crate.x,crate.y);if(crate.y>277)crate=null}
+  // enemy plane
+  var px=((t*34)%(W+90))-60, py=44;
+  spr('plane',0,px,py);
+  spr('prop',Math.floor(t*14)%2,px+32,py+2);
+  spr('pilot_body',0,px+10,py+2);
+  var wx=Math.round(Math.sin(t*5)*1), wy=Math.round(Math.sin(t*9));
+  spr('pilot_head',Math.floor(t*4)%2,px+10+wx,py-6+wy);
+  // bombs
+  if(t-lastBomb>1.7&&px>0&&px<W-20){bombs.push([px+14,py+14]);lastBomb=t}
+  bombs=bombs.filter(function(b){b[1]+=1.6;spr('bomb',0,b[0],b[1]);if(b[1]>276){booms.push([b[0]-3,270,t]);return false}return true});
+  // soldier on skateboard
+  var sx=W/2-8+Math.sin(t*1.1)*58, sy=262;
+  spr('skater',0,sx,sy);
+  if(t-lastRocket>2.2){rockets.push([sx+11,sy-6]);lastRocket=t}
+  rockets=rockets.filter(function(r){r[1]-=3;spr('rocket',Math.floor(t*20)%2,r[0],r[1]);if(r[1]<-10)return false;return true});
+  // explosions
+  booms=booms.filter(function(b){var a=(t-b[2])/0.18;if(a>=3)return false;spr('explosion',Math.floor(a),b[0],b[1]);return true});
+  // HUD
+  for(var i=0;i<3;i++)spr('heart',0,6+i*9,6);
+  g.fillStyle='#fff';g.fillRect(W-52,7,46,5);g.fillStyle='#e63946';g.fillRect(W-51,8,34,3);
+  if(!reduce)requestAnimationFrame(frameScene);
+}
+function buildPhases(){
+  var el=document.getElementById('phaseTabs');el.innerHTML='';
+  [['auto','Auto'],['dawn','Dawn'],['day','Day'],['evening','Evening'],['night','Night']].forEach(function(p){
+    var b=document.createElement('button');b.type='button';b.textContent=p[1];b.setAttribute('aria-pressed',phaseMode===p[0]);
+    b.onclick=function(){phaseMode=p[0];buildPhases();if(reduce)frameScene(performance.now())};el.appendChild(b);
+  });
+  var now=new Date(),hh=('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
+  document.getElementById('phaseNote').textContent=phaseMode==='auto'?'Auto follows the clock ('+hh+' now, so '+PHASES[autoPhase()].label.toLowerCase()+'). Pick a time to preview it.':'Previewing '+PHASES[phaseMode].label.toLowerCase()+'. In the game the phone clock picks it.';
+}
+buildPhases();refresh();requestAnimationFrame(frameScene);
+</script>
