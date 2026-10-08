@@ -226,7 +226,10 @@ const SPRITES = [
 "............","....O..O....","..O.OOOO.O..","...OOYYOO...","..OOYYYYOO..",".OOYYWWYYOO.",".OOYYWWYYOO.","..OOYYYYOO..","...OOYYOO...","..O.OOOO.O..","....O..O....","............"],[
 "............","............","..M....M....","....M.O.....",".M....M..M..","...O.....O..","..M..M......","....O...M...",".M.....M....","......M..M..","............","............"]]},
  {id:'heart',name:'HUD heart',note:'Shows remaining lives.',frames:[[
-".RR.RR.","RRRRRRR","RRRRRRR",".RRRRR.","..RRR..","...R..."]]}
+".RR.RR.","RRRRRRR","RRRRRRR",".RRRRR.","..RRR..","...R..."]]},
+ {id:'icon_music_on',name:'Icon: music on',note:'Music button when the music is playing.',frames:[["....KKKK.","....KWWWK","....KWKKK","....KWK..","....KWK..","..KKKWK..",".KWWWWK..",".KWWWWK..","..KKKK..."]]},
+ {id:'icon_music_off',name:'Icon: music off',note:'Music button when the music is muted.',frames:[["R...KKKK.",".R..KmmmK","..R.KmKKK","...RKmK..","....RmK..","..KKKRK..",".KmmmmR..",".KmmmmKR.","..KKKK..R"]]},
+ {id:'shield_bubble',name:'Shield bubble',note:'Dotted bubble drawn around the soldier while the shield is active.',frames:[["..........L.L.L.........",".......L.L.L.L.L........","......L.........L.L.....",".....L.............L....","....L...............L...","...L....................","..L.................L...",".....................L..","..L...................L.",".L......................","......................L.",".L.....................L","L.......................",".......................L","L.......................",".......................L","L.......................",".......................L","L.....................L.",".L......................","......................L.",".L...................L..","..L.....................","...L.................L..","....................L...","...L...............L....","....L.............L.....",".....L.L.........L......","........L.L.L.L.L.......",".........L.L.L.........."]]}
 ];
 
 var STORE='retro-sprite-lab-v1';
@@ -350,13 +353,13 @@ function spriteKotlin(sp){
 function paletteKotlin(){
   var keys=Object.keys(state.palette).filter(function(k){return k!=='.'});
   return '// Palette: one character = one color (0xAARRGGBB). "." is transparent.\nval PALETTE: Map<Char, Int> = mapOf(\n'+
-    keys.map(function(k){var h=state.palette[k][0].slice(1).toUpperCase();return "    '"+k+"' to 0xFF"+h+'.toInt()  // '+state.palette[k][1]}).join(',\n')+'\n)\n';
+    keys.map(function(k,i){var h=state.palette[k][0].slice(1).toUpperCase();return "    '"+k+"' to 0xFF"+h+'.toInt()'+(i<keys.length-1?',':'')+'  // '+state.palette[k][1]}).join('\n')+'\n)\n';
 }
 function exportCode(){
   document.getElementById('code').value=spriteKotlin(byId(sel));
 }
 function allKotlin(){
-  return 'package com.example.retroshooter\n\n// Generated from Sprite Lab. Edit by hand or paste a fresh export.\n\n'+paletteKotlin()+'\n'+state.sprites.map(spriteKotlin).join('\n');
+  return 'package com.example.retroshooter.graphics\n\n// Generated from Sprite Lab. Edit by hand or paste a fresh export.\n\n'+paletteKotlin()+'\n'+state.sprites.map(spriteKotlin).join('\n');
 }
 function flash(t){var m=document.getElementById('msg');m.textContent=t;setTimeout(function(){if(m.textContent===t)m.textContent=''},2500)}
 function copy(text,label){

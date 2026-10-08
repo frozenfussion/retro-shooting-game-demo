@@ -1,0 +1,15 @@
+# Version catalog: one place for every version number in the project.
+#
+# AGP 8.13 is deliberate. Android Studio Otter 2 supports AGP up to 8.13 and
+# Android Studio Rabbit 1 supports AGP 7.1 to 9.4, so this works in both.
+[versions]
+agp = "8.13.2"
+kotlin = "2.3.21"
+junit = "4.13.2"
+
+[libraries]
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
