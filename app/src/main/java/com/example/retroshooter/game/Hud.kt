@@ -25,7 +25,7 @@ object Hud {
         // Row 1: lives (left), level (center), music button (right).
         for (i in 0 until player.lives) gfx.drawSprite(HEART, 4 + i * 9, 4)
         PixelFont.drawCentered(gfx, "LEVEL ${world.level}", w / 2, 5, Colors.WHITE)
-        gfx.drawSprite(if (musicOn) ICON_MUSIC_ON else ICON_MUSIC_OFF, w - 13, 3)
+        drawMusicButton(gfx, musicOn)
 
         // Row 2: rockets (left), the plane's health bar (right).
         gfx.drawSprite(ROCKET[0], 5, 14)
@@ -48,5 +48,10 @@ object Hud {
             gfx.fillRect(4, 26, 30, 3, Colors.SHADOW)
             gfx.fillRect(5, 27, len, 1, Colors.LIGHT_BLUE)
         }
+    }
+
+    /** The music on/off icon in the top-right corner. The splash screens draw it too. */
+    fun drawMusicButton(gfx: Gfx, musicOn: Boolean) {
+        gfx.drawSprite(if (musicOn) ICON_MUSIC_ON else ICON_MUSIC_OFF, GameConfig.SCREEN_WIDTH - 13, 3)
     }
 }

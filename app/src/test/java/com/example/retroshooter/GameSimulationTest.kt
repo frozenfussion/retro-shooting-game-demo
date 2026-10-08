@@ -34,7 +34,7 @@ class GameSimulationTest {
     private class CountingGfx : Gfx {
         var sprites = 0
         var rects = 0
-        override fun drawSprite(sprite: Sprite, x: Int, y: Int) { sprites++ }
+        override fun drawSprite(sprite: Sprite, x: Int, y: Int, scale: Int) { sprites++ }
         override fun fillRect(x: Int, y: Int, w: Int, h: Int, color: Int) { rects++ }
     }
 
@@ -118,7 +118,7 @@ class GameSimulationTest {
         assertEquals(GameState.GAME_OVER, game.state)
         game.onTap(90f, 200f) // too early
         assertEquals(GameState.GAME_OVER, game.state)
-        repeat(60) { game.update(dt) }
+        repeat(60 * 3) { game.update(dt) } // explosion, splash screen, then taps are accepted
         game.onTap(90f, 200f)
         assertEquals(GameState.PLAYING, game.state)
         assertEquals(1, game.world.level)

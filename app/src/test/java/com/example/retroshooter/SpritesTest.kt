@@ -28,6 +28,12 @@ class SpritesTest {
         "ICON_MUSIC_ON" to listOf(ICON_MUSIC_ON),
         "ICON_MUSIC_OFF" to listOf(ICON_MUSIC_OFF),
         "SHIELD_BUBBLE" to listOf(SHIELD_BUBBLE),
+        "WIN_SOLDIER" to WIN_SOLDIER,
+        "MISSILE_BIG" to MISSILE_BIG,
+        "LOSE_PILOT_HEAD" to LOSE_PILOT_HEAD,
+        "LOSE_PILOT_BODY" to listOf(LOSE_PILOT_BODY),
+        "LOSE_PILOT_HANDS" to listOf(LOSE_PILOT_HANDS),
+        "OFFICE_DESK" to listOf(OFFICE_DESK),
     )
 
     @Test

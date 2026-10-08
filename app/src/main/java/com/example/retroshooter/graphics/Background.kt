@@ -77,8 +77,17 @@ class Background {
      * Draws the whole background.
      * @param screenHeight height of the game screen in game pixels
      * @param seconds time since the game started, used to animate stars and clouds
+     * @param clip if given, only this rectangle is painted (the losing screen paints the sky only inside its window panes)
+     * @param withGround false = sky only
      */
-    fun draw(gfx: Gfx, timeOfDay: TimeOfDay, screenHeight: Int, seconds: Float) {
+    fun draw(
+        gfx: Gfx,
+        timeOfDay: TimeOfDay,
+        screenHeight: Int,
+        seconds: Float,
+        clip: Clip? = null,
+        withGround: Boolean = true,
+    ) {
         val look = looks.getValue(timeOfDay)
         val w = GameConfig.SCREEN_WIDTH
         val groundTop = screenHeight - GameConfig.GROUND_HEIGHT
@@ -89,19 +98,19 @@ class Background {
         // Sky: 8 bands above the horizon.
         val bandH = horizon / look.sky.size + 1
         for (i in look.sky.indices) {
-            gfx.fillRect(0, i * (horizon / look.sky.size), w, bandH, look.sky[i])
+            fill(gfx, clip, 0, i * (horizon / look.sky.size), w, bandH, look.sky[i])
         }
         // Reflection: 7 bands from the horizon down to the ground.
         val waterH = (groundTop - horizon) / look.water.size + 1
         for (i in look.water.indices) {
-            gfx.fillRect(0, horizon + i * ((groundTop - horizon) / look.water.size), w, waterH, look.water[i])
+            fill(gfx, clip, 0, horizon + i * ((groundTop - horizon) / look.water.size), w, waterH, look.water[i])
         }
 
         // Twinkling stars.
         val starCount = (stars.size * look.starFraction).toInt()
         for (i in 0 until starCount) {
             if ((seconds * 2f).toInt().plus(i) % 7 != 0) {
-                gfx.fillRect(stars[i][0], stars[i][1] % (horizon - 8), 1, 1, c(0xFFFFFF))
+                fill(gfx, clip, stars[i][0], stars[i][1] % (horizon - 8), 1, 1, c(0xFFFFFF))
             }
         }
 
@@ -109,11 +118,11 @@ class Background {
         val orbY = if (look.orbOnHorizon) horizon else look.orbY
         when {
             look.orbIsMoon -> {
-                disc(gfx, look.orbX, orbY, 11, look.orbColor, 11)
-                disc(gfx, look.orbX + 5, orbY - 3, 10, look.sky[2], 10) // bite out of the moon = crescent
+                disc(gfx, clip, look.orbX, orbY, 11, look.orbColor, 11)
+                disc(gfx, clip, look.orbX + 5, orbY - 3, 10, look.sky[2], 10) // bite out of the moon = crescent
             }
-            look.orbOnHorizon -> disc(gfx, look.orbX, orbY, 20, look.orbColor, 0) // top half only
-            else -> disc(gfx, look.orbX, orbY, 10, look.orbColor, 10)
+            look.orbOnHorizon -> disc(gfx, clip, look.orbX, orbY, 20, look.orbColor, 0) // top half only
+            else -> disc(gfx, clip, look.orbX, orbY, 10, look.orbColor, 10)
         }
 
         // Clouds drifting right.
@@ -121,17 +130,19 @@ class Background {
             val size = cl[2]
             val cx = ((cl[0] + seconds * (3 + size * 2)) % (w + 60)).toInt() - 30
             val cy = cl[1]
-            gfx.fillRect(cx, cy, 22 * size, 4, look.cloudColor)
-            gfx.fillRect(cx + 4 * size, cy - 4, 12 * size, 4, look.cloudColor)
-            gfx.fillRect(cx + 2 * size, cy + 4, 16 * size, 2, look.cloudColor)
+            fill(gfx, clip, cx, cy, 22 * size, 4, look.cloudColor)
+            fill(gfx, clip, cx + 4 * size, cy - 4, 12 * size, 4, look.cloudColor)
+            fill(gfx, clip, cx + 2 * size, cy + 4, 16 * size, 2, look.cloudColor)
         }
 
+        if (!withGround) return
+
         // Ground.
-        gfx.fillRect(0, groundTop, w, GameConfig.GROUND_HEIGHT, look.groundColor)
-        gfx.fillRect(0, groundTop, w, 3, look.grassColor)
+        fill(gfx, clip, 0, groundTop, w, GameConfig.GROUND_HEIGHT, look.groundColor)
+        fill(gfx, clip, 0, groundTop, w, 3, look.grassColor)
         var x = 0
         while (x < w) {
-            gfx.fillRect(x, groundTop + 3, 4, 2, look.grassShade)
+            fill(gfx, clip, x, groundTop + 3, 4, 2, look.grassShade)
             x += 8
         }
     }
@@ -140,10 +151,26 @@ class Background {
      * Draws a round disc out of horizontal lines.
      * @param lastRow how many rows below the center to draw (0 = top half only)
      */
-    private fun disc(gfx: Gfx, cx: Int, cy: Int, radius: Int, color: Int, lastRow: Int) {
+    private fun disc(gfx: Gfx, clip: Clip?, cx: Int, cy: Int, radius: Int, color: Int, lastRow: Int) {
         for (dy in -radius..lastRow) {
             val half = (sqrt((radius * radius - dy * dy).toFloat()) + 0.5f).toInt()
-            gfx.fillRect(cx - half, cy + dy, half * 2 + 1, 1, color)
+            fill(gfx, clip, cx - half, cy + dy, half * 2 + 1, 1, color)
         }
     }
+
+    /** Fills a rectangle, cut down to the [clip] area when there is one. */
+    private fun fill(gfx: Gfx, clip: Clip?, x: Int, y: Int, w: Int, h: Int, color: Int) {
+        if (clip == null) {
+            gfx.fillRect(x, y, w, h, color)
+            return
+        }
+        val left = maxOf(x, clip.x)
+        val top = maxOf(y, clip.y)
+        val right = minOf(x + w, clip.x + clip.w)
+        val bottom = minOf(y + h, clip.y + clip.h)
+        if (right > left && bottom > top) gfx.fillRect(left, top, right - left, bottom - top, color)
+    }
 }
+
+/** A rectangle that limits where the background may paint. */
+class Clip(val x: Int, val y: Int, val w: Int, val h: Int)

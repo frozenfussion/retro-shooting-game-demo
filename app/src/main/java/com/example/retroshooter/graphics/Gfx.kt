@@ -11,8 +11,11 @@ package com.example.retroshooter.graphics
  * Coordinates are game pixels, with (0, 0) at the top-left corner.
  */
 interface Gfx {
-    /** Draws a sprite with its top-left corner at (x, y). */
-    fun drawSprite(sprite: Sprite, x: Int, y: Int)
+    /**
+     * Draws a sprite with its top-left corner at (x, y). With [scale] 2 every sprite pixel
+     * becomes a 2 x 2 block, which is how the big close-up characters on the splash screens are drawn.
+     */
+    fun drawSprite(sprite: Sprite, x: Int, y: Int, scale: Int = 1)
 
     /** Fills a rectangle with a color (0xAARRGGBB). */
     fun fillRect(x: Int, y: Int, w: Int, h: Int, color: Int)

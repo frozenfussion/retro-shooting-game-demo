@@ -76,6 +76,9 @@ object GameConfig {
     /** Pause after destroying the plane before the next level starts. */
     const val LEVEL_CLEAR_SECONDS = 2.5f
 
+    /** After the soldier's last life is lost, how long the explosion plays before the losing splash screen appears. */
+    const val GAME_OVER_SPLASH_DELAY = 1.2f
+
     /** After game over or a win, taps are ignored for this long so nobody skips the screen by accident. */
     const val END_SCREEN_TAP_DELAY = 0.8f
 

@@ -3,6 +3,7 @@ package com.example.retroshooter.graphics
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Rect
 import java.util.IdentityHashMap
 
 /**
@@ -22,10 +23,21 @@ class AndroidGfx(val width: Int, val height: Int) : Gfx {
         isAntiAlias = false
         style = Paint.Style.FILL
     }
+    private val spritePaint = Paint().apply {
+        isFilterBitmap = false // keep scaled sprites crisp
+        isAntiAlias = false
+    }
+    private val target = Rect()
     private val bitmaps = IdentityHashMap<Sprite, Bitmap>()
 
-    override fun drawSprite(sprite: Sprite, x: Int, y: Int) {
-        canvas.drawBitmap(bitmapFor(sprite), x.toFloat(), y.toFloat(), null)
+    override fun drawSprite(sprite: Sprite, x: Int, y: Int, scale: Int) {
+        val bitmap = bitmapFor(sprite)
+        if (scale == 1) {
+            canvas.drawBitmap(bitmap, x.toFloat(), y.toFloat(), null)
+        } else {
+            target.set(x, y, x + bitmap.width * scale, y + bitmap.height * scale)
+            canvas.drawBitmap(bitmap, null, target, spritePaint)
+        }
     }
 
     override fun fillRect(x: Int, y: Int, w: Int, h: Int, color: Int) {

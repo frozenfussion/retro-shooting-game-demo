@@ -7,7 +7,8 @@ import com.example.retroshooter.config.LevelSettings
 import com.example.retroshooter.graphics.Background
 import com.example.retroshooter.graphics.Colors
 import com.example.retroshooter.graphics.Gfx
-import com.example.retroshooter.graphics.PixelFont
+import com.example.retroshooter.graphics.TextBox
+import com.example.retroshooter.graphics.TextLine
 import com.example.retroshooter.graphics.TimeOfDay
 import java.util.Calendar
 import java.util.Random
@@ -143,7 +144,9 @@ class Game(
             GameState.TITLE -> startNewGame()
             GameState.PLAYING -> if (world.introSeconds <= 0f) world.fireRocket()
             GameState.LEVEL_CLEAR -> Unit // nothing to shoot between levels
-            GameState.GAME_OVER, GameState.WON ->
+            GameState.GAME_OVER ->
+                if (stateSeconds >= GameConfig.GAME_OVER_SPLASH_DELAY + GameConfig.END_SCREEN_TAP_DELAY) startNewGame()
+            GameState.WON ->
                 if (stateSeconds >= GameConfig.END_SCREEN_TAP_DELAY) startNewGame()
         }
     }
@@ -155,8 +158,21 @@ class Game(
     fun draw(gfx: Gfx) {
         val w = GameConfig.SCREEN_WIDTH
         val h = world.screenHeight
-        background.draw(gfx, timeOfDay, h, seconds)
 
+        // The two end-of-game splash screens draw everything themselves.
+        if (state == GameState.WON) {
+            background.draw(gfx, timeOfDay, h, seconds)
+            VictoryScreen.draw(gfx, seconds, stateSeconds, h)
+            Hud.drawMusicButton(gfx, sound.musicEnabled)
+            return
+        }
+        if (state == GameState.GAME_OVER && stateSeconds >= GameConfig.GAME_OVER_SPLASH_DELAY) {
+            GameOverScreen.draw(gfx, background, timeOfDay, seconds, stateSeconds - GameConfig.GAME_OVER_SPLASH_DELAY, h, world.level)
+            Hud.drawMusicButton(gfx, sound.musicEnabled)
+            return
+        }
+
+        background.draw(gfx, timeOfDay, h, seconds)
         if (state != GameState.TITLE) {
             world.draw(gfx)
             Hud.draw(gfx, world, sound.musicEnabled)
@@ -179,22 +195,8 @@ class Game(
                 TextLine("LEVEL ${world.level}", Colors.WHITE, 2),
                 TextLine("CLEAR!", Colors.GOLD, 3),
             )
-            GameState.GAME_OVER -> {
-                if (stateSeconds > 0.8f) {
-                    textBox(
-                        gfx, w / 2, mid,
-                        TextLine("GAME OVER", Colors.RED, 3),
-                        TextLine("LEVEL REACHED: ${world.level}", Colors.WHITE),
-                        TextLine("TAP TO TRY AGAIN", Colors.GOLD),
-                    )
-                }
-            }
-            GameState.WON -> textBox(
-                gfx, w / 2, mid,
-                TextLine("YOU WIN!", Colors.GOLD, 3),
-                TextLine("ALL ${GameConfig.LEVEL_COUNT} LEVELS CLEARED", Colors.WHITE),
-                if (stateSeconds > GameConfig.END_SCREEN_TAP_DELAY) TextLine("TAP TO PLAY AGAIN", Colors.GOLD) else TextLine(" ", Colors.WHITE),
-            )
+            // GAME_OVER (the first moments, while the explosion plays) shows only the world; WON never gets here.
+            GameState.GAME_OVER, GameState.WON -> Unit
         }
 
         if (paused) {
@@ -220,29 +222,8 @@ class Game(
         textBox(gfx, w / 2, h / 2 + 52, TextLine("TAP TO START", promptColor, 2))
     }
 
-    /** One line of text inside a [textBox]. */
-    private class TextLine(val text: String, val color: Int, val scale: Int = 1)
-
-    /**
-     * Draws lines of centered text inside a solid black box with a thin white border.
-     * A plain dark box keeps the text readable on any background: bright day sky, sunset, or night.
-     */
+    /** Draws a black text box (see [TextBox]). */
     private fun textBox(gfx: Gfx, centerX: Int, top: Int, vararg lines: TextLine) {
-        val padding = 6
-        val gap = 4
-        val textWidth = lines.maxOf { PixelFont.width(it.text, it.scale) }
-        val textHeight = lines.sumOf { PixelFont.GLYPH_HEIGHT * it.scale } + gap * (lines.size - 1)
-        val boxWidth = textWidth + padding * 2
-        val boxHeight = textHeight + padding * 2
-        val left = centerX - boxWidth / 2
-
-        gfx.fillRect(left - 1, top - 1, boxWidth + 2, boxHeight + 2, Colors.WHITE) // border
-        gfx.fillRect(left, top, boxWidth, boxHeight, Colors.BLACK)                  // box
-
-        var y = top + padding
-        for (line in lines) {
-            PixelFont.drawCentered(gfx, line.text, centerX, y, line.color, line.scale)
-            y += PixelFont.GLYPH_HEIGHT * line.scale + gap
-        }
+        TextBox.draw(gfx, centerX, top, *lines)
     }
 }
