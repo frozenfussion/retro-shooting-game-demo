@@ -41,8 +41,8 @@ object GameConfig {
 
     /** Enemy plane flying speed on level 1, then multiplied each level. */
     const val PLANE_SPEED_BASE = 30f
-    const val PLANE_SPEED_GROWTH = 1.15f
-    const val PLANE_SPEED_MAX = 130f
+    const val PLANE_SPEED_GROWTH = 1.20f
+    const val PLANE_SPEED_MAX = 150f
 
     /** Plane HP on level 1, plus 1 extra HP every PLANE_HP_EVERY_N_LEVELS levels. */
     const val PLANE_HP_BASE = 3
@@ -50,22 +50,25 @@ object GameConfig {
 
     /** Seconds between bombs on level 1. Multiplied by the factor each level (smaller = more bombs). */
     const val BOMB_INTERVAL_BASE = 1.8f
-    const val BOMB_INTERVAL_FACTOR = 0.90f
-    const val BOMB_INTERVAL_MIN = 0.6f
+    const val BOMB_INTERVAL_FACTOR = 0.85f
+    const val BOMB_INTERVAL_MIN = 0.4f
 
     /**
      * Chance (0.0 to 1.0) that a bomb is aimed: the plane holds it until it is
      * flying right over the soldier. 0 = every bomb drops at a random spot, 1 = every bomb is aimed.
+     * Starts at BASE on level 1 and grows by PER_LEVEL each level, up to MAX.
      */
-    const val BOMB_AIM_CHANCE = 0.5f
+    const val BOMB_AIM_CHANCE_BASE = 0.5f
+    const val BOMB_AIM_CHANCE_PER_LEVEL = 0.05f
+    const val BOMB_AIM_CHANCE_MAX = 0.9f
 
     /** How close (in pixels) the plane must be to the soldier's position to drop an aimed bomb. */
     const val BOMB_AIM_TOLERANCE = 6f
 
     /** Bomb fall speed on level 1, then multiplied each level. */
     const val BOMB_FALL_SPEED_BASE = 70f
-    const val BOMB_FALL_SPEED_GROWTH = 1.10f
-    const val BOMB_FALL_SPEED_MAX = 180f
+    const val BOMB_FALL_SPEED_GROWTH = 1.12f
+    const val BOMB_FALL_SPEED_MAX = 200f
 
     /** How long the "LEVEL n" banner shows before the plane appears. */
     const val LEVEL_INTRO_SECONDS = 1.5f
@@ -97,6 +100,13 @@ object GameConfig {
 
     /** How fast a crate floats down on its parachute. */
     const val CRATE_FALL_SPEED = 28f
+
+    /**
+     * How strongly a falling crate swings left and right. Level 1 starts at BASE and every
+     * level adds PER_LEVEL, so crates get harder to catch.
+     */
+    const val CRATE_SWAY_BASE = 8f
+    const val CRATE_SWAY_PER_LEVEL = 4f
 
     /** How long a crate waits on the ground before it disappears. */
     const val CRATE_GROUND_SECONDS = 5f

@@ -19,6 +19,8 @@ class LevelsTest {
             assertTrue("bombs must not get slower", b.bombFallSpeed >= a.bombFallSpeed)
             assertTrue("plane HP must not drop", b.planeHp >= a.planeHp)
             assertTrue("music must not slow down", b.musicBpm >= a.musicBpm)
+            assertTrue("more bombs must be aimed, not fewer", b.bombAimChance >= a.bombAimChance)
+            assertTrue("crates must sway more", b.crateSway > a.crateSway)
         }
     }
 
@@ -30,11 +32,28 @@ class LevelsTest {
     }
 
     @Test
+    fun levelOneKeepsTheGentleStart() {
+        val one = levels.first()
+        assertEquals(GameConfig.BOMB_INTERVAL_BASE, one.bombIntervalSeconds, 0.001f)
+        assertEquals(GameConfig.BOMB_FALL_SPEED_BASE, one.bombFallSpeed, 0.001f)
+        assertEquals(GameConfig.BOMB_AIM_CHANCE_BASE, one.bombAimChance, 0.001f)
+        assertEquals(GameConfig.CRATE_SWAY_BASE, one.crateSway, 0.001f)
+    }
+
+    @Test
+    fun laterLevelsDropMuchMoreBombsAndCratesSwayMuchMore() {
+        val last = levels.last()
+        assertTrue(last.bombIntervalSeconds < levels.first().bombIntervalSeconds / 3)
+        assertTrue(last.crateSway > levels.first().crateSway * 3)
+    }
+
+    @Test
     fun valuesStayInsideTheirLimits() {
         for (l in levels) {
             assertTrue(l.planeSpeed <= GameConfig.PLANE_SPEED_MAX)
             assertTrue(l.bombFallSpeed <= GameConfig.BOMB_FALL_SPEED_MAX)
             assertTrue(l.bombIntervalSeconds >= GameConfig.BOMB_INTERVAL_MIN)
+            assertTrue(l.bombAimChance <= GameConfig.BOMB_AIM_CHANCE_MAX)
         }
     }
 

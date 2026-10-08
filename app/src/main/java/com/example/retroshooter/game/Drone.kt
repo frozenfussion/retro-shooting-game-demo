@@ -8,7 +8,11 @@ import com.example.retroshooter.graphics.Gfx
  * The supply drone. It flies right to left across the screen and drops one
  * crate at a random spot along the way. It is friendly: rockets pass through it.
  */
-class Drone(private val dropX: Float, private val crateType: CrateType) :
+class Drone(
+    private val dropX: Float,
+    private val crateType: CrateType,
+    private val crateSway: Float,
+) :
     Entity(GameConfig.SCREEN_WIDTH + 10f, GameConfig.DRONE_ALTITUDE.toFloat(), 20, 7) {
 
     private var age = 0f
@@ -22,7 +26,7 @@ class Drone(private val dropX: Float, private val crateType: CrateType) :
 
         if (!hasDropped && x + width / 2f <= dropX) {
             hasDropped = true
-            world.crates.add(Crate(x + width / 2f - 5.5f, y + height, crateType))
+            world.crates.add(Crate(x + width / 2f - 5.5f, y + height, crateType, crateSway))
         }
         if (x + width < -4) alive = false
     }

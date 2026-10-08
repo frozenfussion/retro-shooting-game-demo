@@ -9,7 +9,13 @@ import kotlin.math.sin
  * A supply crate floating down on a parachute. Catch it with the soldier to
  * get its [type]. If it lands and nobody takes it, it disappears after a while.
  */
-class Crate(x: Float, y: Float, val type: CrateType) : Entity(x, y, 11, 11) {
+class Crate(
+    x: Float,
+    y: Float,
+    val type: CrateType,
+    /** How strongly the crate swings left and right while falling (grows with the level). */
+    private val sway: Float = GameConfig.CRATE_SWAY_BASE,
+) : Entity(x, y, 11, 11) {
 
     private var age = 0f
     private var landedFor = 0f
@@ -19,7 +25,7 @@ class Crate(x: Float, y: Float, val type: CrateType) : Entity(x, y, 11, 11) {
         age += dt
         if (!landed) {
             y += GameConfig.CRATE_FALL_SPEED * dt
-            x += sin(age * 2.5f) * 8f * dt // gentle sway
+            x += sin(age * 2.5f) * sway * dt // swings left and right
             x = x.coerceIn(0f, (GameConfig.SCREEN_WIDTH - width).toFloat())
             if (y + height >= world.groundTop) {
                 y = (world.groundTop - height).toFloat()

@@ -127,6 +127,7 @@ class World(
             drone = Drone(
                 dropX = 30f + random.nextInt(GameConfig.SCREEN_WIDTH - 60),
                 crateType = randomCrateType(),
+                crateSway = LevelSettings.forLevel(level).crateSway,
             )
             droneTimer = GameConfig.DRONE_INTERVAL
         }

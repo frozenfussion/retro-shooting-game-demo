@@ -67,7 +67,7 @@ class EnemyPlane(
             val waitedTooLong = bombTimer < -MAX_AIM_WAIT
             if (!nextBombIsAimed || overPlayer || waitedTooLong) {
                 bombTimer = settings.bombIntervalSeconds * (0.8f + random.nextFloat() * 0.4f)
-                nextBombIsAimed = random.nextFloat() < GameConfig.BOMB_AIM_CHANCE
+                nextBombIsAimed = random.nextFloat() < settings.bombAimChance
                 world.bombs.add(Bomb(x + 13f, y + 17f, settings.bombFallSpeed))
                 world.sound.play(Sfx.BOMB_DROP)
             }

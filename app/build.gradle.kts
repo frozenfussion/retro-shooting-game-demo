@@ -9,12 +9,12 @@ android {
     namespace = "com.example.retroshooter"
 
     // compileSdk / targetSdk are kept one step behind the very newest Android
-    // release on purpose. minSdk 24 = Android 7.0, so old phones still work.
+    // release on purpose. minSdk 26 = Android 8.0, which is also where adaptive icons start.
     compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.retroshooter"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"

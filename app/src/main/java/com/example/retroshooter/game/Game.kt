@@ -157,59 +157,92 @@ class Game(
         val h = world.screenHeight
         background.draw(gfx, timeOfDay, h, seconds)
 
-        if (state != GameState.TITLE) world.draw(gfx)
-        if (state != GameState.TITLE) Hud.draw(gfx, world, sound.musicEnabled)
+        if (state != GameState.TITLE) {
+            world.draw(gfx)
+            Hud.draw(gfx, world, sound.musicEnabled)
+        }
 
         val mid = h / 3
         when (state) {
             GameState.TITLE -> drawTitle(gfx, w, h)
             GameState.PLAYING -> {
                 if (world.introSeconds > 0f) {
-                    shadowed(gfx, "LEVEL ${world.level}", w / 2, mid, Colors.WHITE, 3)
-                    shadowed(gfx, if (world.level == 1) "GET READY" else "FASTER!", w / 2, mid + 22, Colors.GOLD, 1)
+                    textBox(
+                        gfx, w / 2, mid,
+                        TextLine("LEVEL ${world.level}", Colors.WHITE, 3),
+                        TextLine(if (world.level == 1) "GET READY" else "FASTER!", Colors.GOLD),
+                    )
                 }
             }
-            GameState.LEVEL_CLEAR -> {
-                shadowed(gfx, "LEVEL ${world.level}", w / 2, mid, Colors.WHITE, 2)
-                shadowed(gfx, "CLEAR!", w / 2, mid + 16, Colors.GOLD, 3)
-            }
+            GameState.LEVEL_CLEAR -> textBox(
+                gfx, w / 2, mid,
+                TextLine("LEVEL ${world.level}", Colors.WHITE, 2),
+                TextLine("CLEAR!", Colors.GOLD, 3),
+            )
             GameState.GAME_OVER -> {
                 if (stateSeconds > 0.8f) {
-                    shadowed(gfx, "GAME OVER", w / 2, mid, Colors.RED, 3)
-                    shadowed(gfx, "LEVEL REACHED: ${world.level}", w / 2, mid + 26, Colors.WHITE, 1)
-                    shadowed(gfx, "TAP TO TRY AGAIN", w / 2, mid + 40, Colors.GOLD, 1)
+                    textBox(
+                        gfx, w / 2, mid,
+                        TextLine("GAME OVER", Colors.RED, 3),
+                        TextLine("LEVEL REACHED: ${world.level}", Colors.WHITE),
+                        TextLine("TAP TO TRY AGAIN", Colors.GOLD),
+                    )
                 }
             }
-            GameState.WON -> {
-                shadowed(gfx, "YOU WIN!", w / 2, mid, Colors.GOLD, 3)
-                shadowed(gfx, "ALL ${GameConfig.LEVEL_COUNT} LEVELS CLEARED", w / 2, mid + 26, Colors.WHITE, 1)
-                if (stateSeconds > GameConfig.END_SCREEN_TAP_DELAY) {
-                    shadowed(gfx, "TAP TO PLAY AGAIN", w / 2, mid + 40, Colors.CYAN, 1)
-                }
-            }
+            GameState.WON -> textBox(
+                gfx, w / 2, mid,
+                TextLine("YOU WIN!", Colors.GOLD, 3),
+                TextLine("ALL ${GameConfig.LEVEL_COUNT} LEVELS CLEARED", Colors.WHITE),
+                if (stateSeconds > GameConfig.END_SCREEN_TAP_DELAY) TextLine("TAP TO PLAY AGAIN", Colors.GOLD) else TextLine(" ", Colors.WHITE),
+            )
         }
 
         if (paused) {
-            shadowed(gfx, "PAUSED", w / 2, mid, Colors.WHITE, 3)
-            shadowed(gfx, "TAP TO CONTINUE", w / 2, mid + 26, Colors.GOLD, 1)
+            textBox(
+                gfx, w / 2, mid,
+                TextLine("PAUSED", Colors.WHITE, 3),
+                TextLine("TAP TO CONTINUE", Colors.GOLD),
+            )
         }
     }
 
     private fun drawTitle(gfx: Gfx, w: Int, h: Int) {
-        shadowed(gfx, GameConfig.GAME_TITLE, w / 2, h / 4, Colors.GOLD, 4)
-        shadowed(gfx, "TILT PHONE TO MOVE", w / 2, h / 2, Colors.WHITE, 1)
-        shadowed(gfx, "TAP TO FIRE ROCKETS", w / 2, h / 2 + 10, Colors.WHITE, 1)
-        shadowed(gfx, "SHOOT DOWN THE PLANE", w / 2, h / 2 + 20, Colors.WHITE, 1)
-        shadowed(gfx, "SURVIVE ${GameConfig.LEVEL_COUNT} LEVELS", w / 2, h / 2 + 30, Colors.WHITE, 1)
-        // Blinking prompt.
-        if ((seconds * 2).toInt() % 2 == 0) {
-            shadowed(gfx, "TAP TO START", w / 2, h / 2 + 52, Colors.CYAN, 2)
-        }
+        textBox(gfx, w / 2, h / 5, TextLine(GameConfig.GAME_TITLE, Colors.GOLD, 4))
+        textBox(
+            gfx, w / 2, h / 2 - 20,
+            TextLine("TILT PHONE TO MOVE", Colors.WHITE),
+            TextLine("TAP TO FIRE ROCKETS", Colors.WHITE),
+            TextLine("SHOOT DOWN THE PLANE", Colors.WHITE),
+            TextLine("SURVIVE ${GameConfig.LEVEL_COUNT} LEVELS", Colors.WHITE),
+        )
+        // The prompt blinks: the box stays, the text switches on and off.
+        val promptColor = if ((seconds * 2).toInt() % 2 == 0) Colors.GOLD else Colors.BLACK
+        textBox(gfx, w / 2, h / 2 + 52, TextLine("TAP TO START", promptColor, 2))
     }
 
-    /** Draws centered text with a dark drop shadow so it reads on any background. */
-    private fun shadowed(gfx: Gfx, text: String, centerX: Int, y: Int, color: Int, scale: Int) {
-        PixelFont.drawCentered(gfx, text, centerX + scale, y + scale, Colors.SHADOW, scale)
-        PixelFont.drawCentered(gfx, text, centerX, y, color, scale)
+    /** One line of text inside a [textBox]. */
+    private class TextLine(val text: String, val color: Int, val scale: Int = 1)
+
+    /**
+     * Draws lines of centered text inside a solid black box with a thin white border.
+     * A plain dark box keeps the text readable on any background: bright day sky, sunset, or night.
+     */
+    private fun textBox(gfx: Gfx, centerX: Int, top: Int, vararg lines: TextLine) {
+        val padding = 6
+        val gap = 4
+        val textWidth = lines.maxOf { PixelFont.width(it.text, it.scale) }
+        val textHeight = lines.sumOf { PixelFont.GLYPH_HEIGHT * it.scale } + gap * (lines.size - 1)
+        val boxWidth = textWidth + padding * 2
+        val boxHeight = textHeight + padding * 2
+        val left = centerX - boxWidth / 2
+
+        gfx.fillRect(left - 1, top - 1, boxWidth + 2, boxHeight + 2, Colors.WHITE) // border
+        gfx.fillRect(left, top, boxWidth, boxHeight, Colors.BLACK)                  // box
+
+        var y = top + padding
+        for (line in lines) {
+            PixelFont.drawCentered(gfx, line.text, centerX, y, line.color, line.scale)
+            y += PixelFont.GLYPH_HEIGHT * line.scale + gap
+        }
     }
 }

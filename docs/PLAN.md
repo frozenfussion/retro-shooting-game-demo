@@ -45,8 +45,8 @@ A single Kotlin file, `GameConfig.kt`, holds every tuning value. The player neve
 
 Planned settings:
 
-- **Drone:** how often it appears, which crate types it can carry, crate fall speed.
-- **Bombs:** how often the plane drops them, fall speed, how many are aimed at the soldier.
+- **Drone:** how often it appears, which crate types it can carry, crate fall speed and how much crates sway (grows with the level).
+- **Bombs:** how often the plane drops them, fall speed, how many are aimed at the soldier (all grow with the level).
 - **Difficulty:** difficulty level (easy / normal / hard), number of levels (10), and how much faster each level gets (the speed curve and its maximum).
 - **Player:** starting lives, starting rockets, tilt sensitivity, tilt dead zone.
 - **Plane:** starting HP, flight speed.
@@ -80,7 +80,7 @@ Candidate later features: a boss on some levels, upgraded aircraft per level, sa
 | Gradle | 8.13 (wrapper included) | Required by AGP 8.13 |
 | Kotlin | 2.3.21 | Compatible with AGP 8.13 |
 | compileSdk / targetSdk | 35 | One step behind the newest release, as requested |
-| minSdk | 24 (Android 7.0) | Runs on old phones |
+| minSdk | 26 (Android 8.0) | Runs on old phones, and adaptive icons (the pixel-art logo) start here |
 | Java | 17 | Needed by AGP 8.13. Android Studio's bundled JDK is fine |
 | Libraries | None | Plain Kotlin and the Android framework only, so students can read everything |
 
@@ -103,6 +103,9 @@ The `game/`, `audio/` synth code and `graphics/` data are plain Kotlin with no A
 - First playable version written. It builds, passes its 29 unit tests and lint shows only intentional warnings.
 - Not yet run on a real phone. Tilt direction, rocket feel and difficulty need Aziz's hands-on test. Tilt direction is flipped with `TILT_INVERT` in `GameConfig.kt` if needed.
 - Title text is a placeholder (`GAME_TITLE` in `GameConfig.kt`).
+- App icon: Aziz's logo redrawn as pixel art. Edit the grid in `tools/make_icon.py` and run it to regenerate the icon files.
+- After the first phone test: title and message text now sit in black boxes, and levels after level 1 ramp up harder (faster plane, more and more aimed bombs, crates that sway more).
+- Win screen will become a splash: smiling soldier holding up a soda, rockets launching behind him. Design is being done first in the Sprite Lab.
 
 ## Next steps
 

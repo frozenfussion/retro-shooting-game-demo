@@ -16,6 +16,8 @@ data class LevelSettings(
     val planeHp: Int,
     val bombIntervalSeconds: Float,
     val bombFallSpeed: Float,
+    val bombAimChance: Float,
+    val crateSway: Float,
     val musicBpm: Int,
 ) {
     companion object {
@@ -36,6 +38,11 @@ data class LevelSettings(
                     GameConfig.BOMB_FALL_SPEED_MAX,
                     GameConfig.BOMB_FALL_SPEED_BASE * GameConfig.BOMB_FALL_SPEED_GROWTH.pow(steps),
                 ),
+                bombAimChance = min(
+                    GameConfig.BOMB_AIM_CHANCE_MAX,
+                    GameConfig.BOMB_AIM_CHANCE_BASE + GameConfig.BOMB_AIM_CHANCE_PER_LEVEL * steps,
+                ),
+                crateSway = GameConfig.CRATE_SWAY_BASE + GameConfig.CRATE_SWAY_PER_LEVEL * steps,
                 musicBpm = GameConfig.MUSIC_BASE_BPM + GameConfig.MUSIC_BPM_PER_LEVEL * steps,
             )
         }
