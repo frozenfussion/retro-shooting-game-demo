@@ -60,11 +60,12 @@ textarea{width:100%;height:170px;background:#0b0920;color:#b9ffc8;border:2px sol
 
   <div class="main">
     <section class="panel" aria-label="Live scene">
-      <h2>Live scene</h2>
+      <h2>Live preview</h2>
       <canvas id="scene" width="180" height="320"></canvas>
+      <div class="tabs" id="sceneTabs" role="group" aria-label="Which screen to preview"></div>
       <div class="tabs" id="phaseTabs" role="group" aria-label="Time of day"></div>
       <p class="hint" id="phaseNote"></p>
-      <p class="hint">Preview only. Plane flies, pilot laughs, soldier rolls and fires, drone drops crates. Motion here is for the look, the real rules come with the game code.</p>
+      <p class="hint">Preview only. The game scene shows the plane, soldier and drone. The victory splash is the screen after beating level 10. Motion here is for the look, the real rules come with the game code.</p>
     </section>
 
     <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
@@ -229,7 +230,9 @@ const SPRITES = [
 ".RR.RR.","RRRRRRR","RRRRRRR",".RRRRR.","..RRR..","...R..."]]},
  {id:'icon_music_on',name:'Icon: music on',note:'Music button when the music is playing.',frames:[["....KKKK.","....KWWWK","....KWKKK","....KWK..","....KWK..","..KKKWK..",".KWWWWK..",".KWWWWK..","..KKKK..."]]},
  {id:'icon_music_off',name:'Icon: music off',note:'Music button when the music is muted.',frames:[["R...KKKK.",".R..KmmmK","..R.KmKKK","...RKmK..","....RmK..","..KKKRK..",".KmmmmR..",".KmmmmKR.","..KKKK..R"]]},
- {id:'shield_bubble',name:'Shield bubble',note:'Dotted bubble drawn around the soldier while the shield is active.',frames:[["..........L.L.L.........",".......L.L.L.L.L........","......L.........L.L.....",".....L.............L....","....L...............L...","...L....................","..L.................L...",".....................L..","..L...................L.",".L......................","......................L.",".L.....................L","L.......................",".......................L","L.......................",".......................L","L.......................",".......................L","L.....................L.",".L......................","......................L.",".L...................L..","..L.....................","...L.................L..","....................L...","...L...............L....","....L.............L.....",".....L.L.........L......","........L.L.L.L.L.......",".........L.L.L.........."]]}
+ {id:'shield_bubble',name:'Shield bubble',note:'Dotted bubble drawn around the soldier while the shield is active.',frames:[["..........L.L.L.........",".......L.L.L.L.L........","......L.........L.L.....",".....L.............L....","....L...............L...","...L....................","..L.................L...",".....................L..","..L...................L.",".L......................","......................L.",".L.....................L","L.......................",".......................L","L.......................",".......................L","L.......................",".......................L","L.....................L.",".L......................","......................L.",".L...................L..","..L.....................","...L.................L..","....................L...","...L...............L....","....L.............L.....",".....L.L.........L......","........L.L.L.L.L.......",".........L.L.L.........."]]},
+ {id:'win_soldier',name:'Victory soldier',note:'Win screen: front view, smiling, soda raised. 2 frames (wink and fizz).',frames:[["....................K.K...","........KKKKKKKK...KLKLK..",".......KttttttttK...KLK...","......KttTTTTTTttK.KMMMK..","......KtTTTTTTTTtKKRRRRRK.",".....KttttttttttttKRWWWRK.","......KKSSSSSSSSKKKWWRWWK.",".......KSSKSSKSSK.KRRRRRK.",".......KSSSssSSSK.KSSSSSK.",".......KtSSSSSStK.KsSSSSK.",".......KtKWWWWKtK.KsSSSSK.",".......KttKKKKttK.KtTTKK..","........KttttttK..KtTTK...","......KKKKssssKKKKKtTTK...","....KKtTTTTTTTTTTTTTTTK...","...KtTTTTtTTNTTtTKKKKK....","...KtTTTNTTtTTTNTK........","...KtTTTTTNTTtTTTK........","...KtTTtTTTTNTTTtK........","...KtTTTTNTTTTtTTK........","...KtTTTtTTTNTTTTK........","...KtTTTTTtTTNTTTK........","...KtTTTNTTTTTtTTK........","...KSSSTTtTTNTTTTK........","...KSSSmmmmMMmmmmK........","....KKKtTTTKKTTTtK........","......KttTTKKTTTtK........","......KtTNTKKTTTtK........","......KtTTTKKTTTtK........","......KtTTTKKTNTtK........","......KtTTTKKTTttK........","......KtTTTKKTTTtK........",".....KmmmmmKKmmmmmK.......","...KKKmmmmmKKmmmmmKKK.....","..KRRRRRRRRRRRRRRRRRRK....","...KOOOOOOOOOOOOOOOOK.....","....KMMMKKKKKKKKMMMK......","....KMMMK......KMMMK......",".....KKK........KKK......."],[".....................K.K..","........KKKKKKKK....KLKLK.",".......KttttttttK..KLKLK..","......KttTTTTTTttK.KMMMK..","......KtTTTTTTTTtKKRRRRRK.",".....KttttttttttttKRWWWRK.","......KKSSSSSSSSKKKWWRWWK.",".......KSKKSSKSSK.KRRRRRK.",".......KSSSssSSSK.KSSSSSK.",".......KtSSSSSStK.KsSSSSK.",".......KtKWWWWKtK.KsSSSSK.",".......KttKKKKttK.KtTTKK..","........KttttttK..KtTTK...","......KKKKssssKKKKKtTTK...","....KKtTTTTTTTTTTTTTTTK...","...KtTTTTtTTNTTtTKKKKK....","...KtTTTNTTtTTTNTK........","...KtTTTTTNTTtTTTK........","...KtTTtTTTTNTTTtK........","...KtTTTTNTTTTtTTK........","...KtTTTtTTTNTTTTK........","...KtTTTTTtTTNTTTK........","...KtTTTNTTTTTtTTK........","...KSSSTTtTTNTTTTK........","...KSSSmmmmMMmmmmK........","....KKKtTTTKKTTTtK........","......KttTTKKTTTtK........","......KtTNTKKTTTtK........","......KtTTTKKTTTtK........","......KtTTTKKTNTtK........","......KtTTTKKTTttK........","......KtTTTKKTTTtK........",".....KmmmmmKKmmmmmK.......","...KKKmmmmmKKmmmmmKKK.....","..KRRRRRRRRRRRRRRRRRRK....","...KOOOOOOOOOOOOOOOOK.....","....KMMMKKKKKKKKMMMK......","....KMMMK......KMMMK......",".....KKK........KKK......."]]},
+ {id:'missile_big',name:'Victory missile',note:'Launching in the background of the win screen. 2 flame frames.',frames:[["...K...","..KRK..","..KRK..",".KRRRK.",".KWWWK.",".KWWWK.",".KRRRK.",".KWWWK.",".KWWWK.","KKWWWKK","KRKmKRK",".KKmKK.","..OOO..","..OYO..","..OYO..","...O...","...Y...","......."],["...K...","..KRK..","..KRK..",".KRRRK.",".KWWWK.",".KWWWK.",".KRRRK.",".KWWWK.",".KWWWK.","KKWWWKK","KRKmKRK",".KKmKK.","..OOO..",".OOYOO.","..OYO..","..OYO..","...O...","...Y..."]]}
 ];
 
 var STORE='retro-sprite-lab-v1';
@@ -430,9 +433,78 @@ function sky(t){
   g.fillStyle=P.grass;g.fillRect(0,288,W,3);
   g.fillStyle=P.strip;for(var x=0;x<W;x+=8)g.fillRect(x,291,4,2);
 }
+
+/* ---------- victory splash ---------- */
+var sceneMode='game';
+var GLYPHS={"A": [".#.", "#.#", "###", "#.#", "#.#"], "B": ["##.", "#.#", "##.", "#.#", "##."], "C": [".##", "#..", "#..", "#..", ".##"], "D": ["##.", "#.#", "#.#", "#.#", "##."], "E": ["###", "#..", "##.", "#..", "###"], "F": ["###", "#..", "##.", "#..", "#.."], "G": [".##", "#..", "#.#", "#.#", ".##"], "H": ["#.#", "#.#", "###", "#.#", "#.#"], "I": ["###", ".#.", ".#.", ".#.", "###"], "J": ["..#", "..#", "..#", "#.#", ".#."], "K": ["#.#", "#.#", "##.", "#.#", "#.#"], "L": ["#..", "#..", "#..", "#..", "###"], "M": ["#.#", "###", "###", "#.#", "#.#"], "N": ["##.", "#.#", "#.#", "#.#", "#.#"], "O": [".#.", "#.#", "#.#", "#.#", ".#."], "P": ["##.", "#.#", "##.", "#..", "#.."], "Q": [".#.", "#.#", "#.#", "##.", ".##"], "R": ["##.", "#.#", "##.", "#.#", "#.#"], "S": [".##", "#..", ".#.", "..#", "##."], "T": ["###", ".#.", ".#.", ".#.", ".#."], "U": ["#.#", "#.#", "#.#", "#.#", "###"], "V": ["#.#", "#.#", "#.#", "#.#", ".#."], "W": ["#.#", "#.#", "###", "###", "#.#"], "X": ["#.#", "#.#", ".#.", "#.#", "#.#"], "Y": ["#.#", "#.#", ".#.", ".#.", ".#."], "Z": ["###", "..#", ".#.", "#..", "###"], "0": ["###", "#.#", "#.#", "#.#", "###"], "1": [".#.", "##.", ".#.", ".#.", "###"], "2": ["##.", "..#", ".#.", "#..", "###"], "3": ["##.", "..#", ".#.", "..#", "##."], "4": ["#.#", "#.#", "###", "..#", "..#"], "5": ["###", "#..", "##.", "..#", "##."], "6": [".##", "#..", "###", "#.#", "###"], "7": ["###", "..#", ".#.", ".#.", ".#."], "8": ["###", "#.#", "###", "#.#", "###"], "9": ["###", "#.#", "###", "..#", "##."], " ": ["...", "...", "...", "...", "..."], ":": ["...", ".#.", "...", ".#.", "..."], "-": ["...", "...", "###", "...", "..."], "!": [".#.", ".#.", ".#.", "...", ".#."], ".": ["...", "...", "...", "...", ".#."], "/": ["..#", "..#", ".#.", "#..", "#.."], "?": ["##.", "..#", ".#.", "...", ".#."], "+": ["...", ".#.", "###", ".#.", "..."]};
+function textW(s,k){return s.length?(s.length*4-1)*k:0}
+function drawText(s,x,y,color,k){
+  g.fillStyle=color;
+  for(var i=0;i<s.length;i++){var gl=GLYPHS[s[i].toUpperCase()];
+    if(gl){for(var r=0;r<5;r++)for(var c=0;c<3;c++)if(gl[r][c]==='#')g.fillRect(x+i*4*k+c*k,y+r*k,k,k)}}
+}
+/* A black box with a white border around centered lines [[text,color,scale],...]. */
+function textBox(cx,top,lines){
+  var pad=6,gap=4,tw=0,th=gap*(lines.length-1);
+  lines.forEach(function(l){tw=Math.max(tw,textW(l[0],l[2]||1));th+=5*(l[2]||1)});
+  var bw=tw+pad*2,bh=th+pad*2,left=Math.round(cx-bw/2);
+  g.fillStyle='#f6f1e6';g.fillRect(left-1,top-1,bw+2,bh+2);
+  g.fillStyle='#000';g.fillRect(left,top,bw,bh);
+  var y=top+pad;
+  lines.forEach(function(l){var k=l[2]||1;drawText(l[0],Math.round(cx-textW(l[0],k)/2),y,l[1],k);y+=5*k+gap});
+  return bh;
+}
+function spr3(id,f,x,y,k){var b=bitmap(id,f);g.drawImage(b,Math.round(x),Math.round(y),b.width*k,b.height*k)}
+/* Missiles launching behind the soldier: each one climbs with a smoke trail, then bursts into sparks. */
+var LAUNCHES=[{x:22,v:105,apex:92,off:0.0,p:3.6},{x:150,v:120,apex:70,off:0.9,p:3.4},{x:58,v:95,apex:126,off:1.7,p:3.9},{x:118,v:110,apex:104,off:2.4,p:3.7},{x:88,v:130,apex:58,off:3.0,p:3.5}];
+var SPARK=['#ffd93b','#ff9a1f','#e63946','#f6f1e6','#8fc3ff'];
+function drawLaunches(t,ground){
+  var K=2, mh=18*K, mw=7*K;                 // the missiles are drawn at 2x
+  LAUNCHES.forEach(function(L,i){
+    var local=(t+L.off)%L.p, base=ground-mh+8, rise=(base-L.apex)/L.v;
+    if(local<rise){
+      var y=base-L.v*local;
+      // smoke trail: puffs that drift apart and fade
+      for(var k=1;k<16;k++){
+        var age=k*0.06; if(local-age<0)break;
+        var py=base-L.v*(local-age), sz=3+Math.floor(k/3)*2, a=1-k/16;
+        g.globalAlpha=a*0.9;g.fillStyle=k<4?'#ffd9a0':'#dcdce8';
+        g.fillRect(Math.round(L.x+mw/2-sz/2+((k*7+i*3)%5-2)*1.2),Math.round(py+mh-2),sz,sz);
+      }
+      g.globalAlpha=1;
+      // launch flash on the ground for the first moments
+      if(local<0.3){g.globalAlpha=1-local/0.3;g.fillStyle='#ffd93b';g.fillRect(L.x-2,ground-5,mw+4,5);g.fillStyle='#ff9a1f';g.fillRect(L.x+2,ground-9,mw-4,4);g.globalAlpha=1}
+      spr3('missile_big',Math.floor(t*14)%2,L.x,y,K);
+    }else if(local<rise+1.0){
+      var q=(local-rise)/1.0, cx=L.x+mw/2, cy=L.apex;
+      for(var s=0;s<18;s++){
+        var ang=s/18*Math.PI*2, r=4+q*34, px=cx+Math.cos(ang)*r, py=cy+Math.sin(ang)*r*0.9+q*q*16;
+        g.globalAlpha=1-q;g.fillStyle=SPARK[(s+i)%SPARK.length];
+        g.fillRect(Math.round(px),Math.round(py),3,3);
+      }
+      g.globalAlpha=1;
+    }
+  });
+}
+function drawVictory(t){
+  var ground=288;
+  drawLaunches(t,ground);
+  // the soldier: 3x bigger than the game sprites, bobbing, winking now and then
+  var f=(Math.floor(t*1.6)%3===2)?1:0;
+  var bob=Math.round(Math.sin(t*4));
+  var k=3, b=bitmap('win_soldier',f);
+  spr3('win_soldier',f,90-b.width*k/2,ground-(b.height-3)*k+bob,k);
+  // text
+  var h=textBox(90,28,[['YOU WIN!','#ffb000',3]]);
+  textBox(90,28+h+8,[['ALL 10 LEVELS CLEARED','#f6f1e6',1]]);
+  var blink=(Math.floor(t*2)%2===0)?'#ffb000':'#000';
+  textBox(90,150,[['TAP TO PLAY AGAIN',blink,1]]);
+}
+
 function frameScene(now){
   var t=Math.max(0,(now-t0)/1000);if(reduce)t=1.2;
   g.clearRect(0,0,W,H);sky(t);
+  if(sceneMode==='victory'){drawVictory(t);if(!reduce)requestAnimationFrame(frameScene);return}
   // drone + crate
   var dx=(W+30)-((t*22)%(W+60)), dy=96+Math.sin(t*2)*3;
   spr('drone',Math.floor(t*12)%2,dx-10,dy);
@@ -460,6 +532,13 @@ function frameScene(now){
   g.fillStyle='#fff';g.fillRect(W-52,7,46,5);g.fillStyle='#e63946';g.fillRect(W-51,8,34,3);
   if(!reduce)requestAnimationFrame(frameScene);
 }
+function buildScenes(){
+  var el=document.getElementById('sceneTabs');el.innerHTML='';
+  [['game','Game scene'],['victory','Victory splash']].forEach(function(p){
+    var b=document.createElement('button');b.type='button';b.textContent=p[1];b.setAttribute('aria-pressed',sceneMode===p[0]);
+    b.onclick=function(){sceneMode=p[0];buildScenes();if(reduce)frameScene(performance.now())};el.appendChild(b);
+  });
+}
 function buildPhases(){
   var el=document.getElementById('phaseTabs');el.innerHTML='';
   [['auto','Auto'],['dawn','Dawn'],['day','Day'],['evening','Evening'],['night','Night']].forEach(function(p){
@@ -469,5 +548,5 @@ function buildPhases(){
   var now=new Date(),hh=('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
   document.getElementById('phaseNote').textContent=phaseMode==='auto'?'Auto follows the clock ('+hh+' now, so '+PHASES[autoPhase()].label.toLowerCase()+'). Pick a time to preview it.':'Previewing '+PHASES[phaseMode].label.toLowerCase()+'. In the game the phone clock picks it.';
 }
-buildPhases();refresh();requestAnimationFrame(frameScene);
+buildScenes();buildPhases();refresh();requestAnimationFrame(frameScene);
 </script>
