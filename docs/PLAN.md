@@ -75,7 +75,7 @@ Candidate later features: saved games, a boss plane, new crate types, more enemy
 
 1. Aziz approves the characters and plan.
 2. Create the Android Studio project (Kotlin).
-3. Build the game in small modules: sprites, game loop, input, entities, collisions, HUD, config, saves.
+3. Build the game in small modules: sprites, game loop, input, entities, collisions, HUD, config, sound, score.
 4. Test on Aziz's phone.
 5. Write the README.
 6. Student handouts, using the saved screenshots.
