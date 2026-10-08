@@ -58,6 +58,7 @@ object PixelFont {
         '/' to listOf("..#", "..#", ".#.", "#..", "#.."),
         '?' to listOf("##.", "..#", ".#.", "...", ".#."),
         '+' to listOf("...", ".#.", "###", ".#.", "..."),
+        '\'' to listOf(".#.", ".#.", "...", "...", "..."),
     )
 
     /** Width in game pixels of [text] drawn at [scale]. */
